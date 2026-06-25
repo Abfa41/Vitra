@@ -257,7 +257,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============ VITALS METHODS ============
     // =====================================================
 
-    public void addVitals(VitalsRecord vitals) {
+    public long addVitals(VitalsRecord vitals) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("date", dateFormat.format(vitals.date));
@@ -269,8 +269,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("weight", vitals.weight);
         values.put("spo2", vitals.spo2);
         values.put("notes", vitals.notes);
-        db.insert(TABLE_VITALS, null, values);
+        long id = db.insert(TABLE_VITALS, null, values);
         db.close();
+        return id;
     }
 
     public List<VitalsRecord> getAllVitals() {
@@ -281,8 +282,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             VitalsRecord v = new VitalsRecord();
             v.id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
             try {
-                v.date = dateFormat.parse(cursor.getString(cursor.getColumnIndexOrThrow("date")));
-            } catch (Exception e) { v.date = new Date(); }
+                String dateStr = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                if (dateStr != null && !dateStr.isEmpty()) {
+                    v.date = dateFormat.parse(dateStr);
+                } else {
+                    v.date = new Date();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                v.date = new Date();
+            }
             v.systolic = cursor.getInt(cursor.getColumnIndexOrThrow("systolic"));
             v.diastolic = cursor.getInt(cursor.getColumnIndexOrThrow("diastolic"));
             v.bloodSugar = cursor.getInt(cursor.getColumnIndexOrThrow("blood_sugar"));
@@ -310,8 +319,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             VitalsRecord v = new VitalsRecord();
             v.id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
             try {
-                v.date = dateFormat.parse(cursor.getString(cursor.getColumnIndexOrThrow("date")));
-            } catch (Exception e) { v.date = new Date(); }
+                String dateStr = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                if (dateStr != null && !dateStr.isEmpty()) {
+                    v.date = dateFormat.parse(dateStr);
+                } else {
+                    v.date = new Date();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                v.date = new Date();
+            }
             v.systolic = cursor.getInt(cursor.getColumnIndexOrThrow("systolic"));
             v.diastolic = cursor.getInt(cursor.getColumnIndexOrThrow("diastolic"));
             v.bloodSugar = cursor.getInt(cursor.getColumnIndexOrThrow("blood_sugar"));
@@ -331,7 +348,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============ MEDICINES METHODS ============
     // =====================================================
 
-    public void addMedicine(Medicine medicine) {
+    public long addMedicine(Medicine medicine) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("name", medicine.name);
@@ -343,8 +360,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("next_dose_time", medicine.nextDoseTime != null ? dateFormat.format(medicine.nextDoseTime) : null);
         values.put("is_active", medicine.isActive ? 1 : 0);
         values.put("dose_count", medicine.doseCount);
-        db.insert(TABLE_MEDICINES, null, values);
+        long id = db.insert(TABLE_MEDICINES, null, values);
         db.close();
+        return id;
     }
 
     public List<Medicine> getAllMedicines() {
@@ -358,13 +376,43 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             m.dose = cursor.getString(cursor.getColumnIndexOrThrow("dose"));
             m.frequency = cursor.getString(cursor.getColumnIndexOrThrow("frequency"));
             m.intervalHours = cursor.getInt(cursor.getColumnIndexOrThrow("interval_hours"));
+
             try {
-                m.startDate = dateFormat.parse(cursor.getString(cursor.getColumnIndexOrThrow("start_date")));
-                String end = cursor.getString(cursor.getColumnIndexOrThrow("end_date"));
-                if (end != null) m.endDate = dateFormat.parse(end);
-                String next = cursor.getString(cursor.getColumnIndexOrThrow("next_dose_time"));
-                if (next != null) m.nextDoseTime = dateFormat.parse(next);
-            } catch (Exception e) { m.startDate = new Date(); }
+                String startDateStr = cursor.getString(cursor.getColumnIndexOrThrow("start_date"));
+                if (startDateStr != null && !startDateStr.isEmpty()) {
+                    m.startDate = dateFormat.parse(startDateStr);
+                } else {
+                    m.startDate = new Date();
+                }
+
+                String endDateStr = cursor.getString(cursor.getColumnIndexOrThrow("end_date"));
+                if (endDateStr != null && !endDateStr.isEmpty()) {
+                    try {
+                        m.endDate = dateFormat.parse(endDateStr);
+                    } catch (java.text.ParseException e) {
+                        e.printStackTrace();
+                        m.endDate = null;
+                    }
+                } else {
+                    m.endDate = null;
+                }
+
+                String nextDoseStr = cursor.getString(cursor.getColumnIndexOrThrow("next_dose_time"));
+                if (nextDoseStr != null && !nextDoseStr.isEmpty()) {
+                    try {
+                        m.nextDoseTime = dateFormat.parse(nextDoseStr);
+                    } catch (java.text.ParseException e) {
+                        e.printStackTrace();
+                        m.nextDoseTime = null;
+                    }
+                } else {
+                    m.nextDoseTime = null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                m.startDate = new Date();
+            }
+
             m.isActive = cursor.getInt(cursor.getColumnIndexOrThrow("is_active")) == 1;
             m.doseCount = cursor.getInt(cursor.getColumnIndexOrThrow("dose_count"));
             list.add(m);
@@ -398,15 +446,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============ SYMPTOMS METHODS ============
     // =====================================================
 
-    public void addSymptom(Symptom symptom) {
+    public long addSymptom(Symptom symptom) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("date", dateFormat.format(symptom.date));
         values.put("symptom_name", symptom.symptomName);
         values.put("severity", symptom.severity);
         values.put("notes", symptom.notes);
-        db.insert(TABLE_SYMPTOMS, null, values);
+        long id = db.insert(TABLE_SYMPTOMS, null, values);
         db.close();
+        return id;
     }
 
     public List<Symptom> getAllSymptoms() {
@@ -417,8 +466,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             Symptom s = new Symptom();
             s.id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
             try {
-                s.date = dateFormat.parse(cursor.getString(cursor.getColumnIndexOrThrow("date")));
-            } catch (Exception e) { s.date = new Date(); }
+                String dateStr = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                if (dateStr != null && !dateStr.isEmpty()) {
+                    s.date = dateFormat.parse(dateStr);
+                } else {
+                    s.date = new Date();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                s.date = new Date();
+            }
             s.symptomName = cursor.getString(cursor.getColumnIndexOrThrow("symptom_name"));
             s.severity = cursor.getInt(cursor.getColumnIndexOrThrow("severity"));
             s.notes = cursor.getString(cursor.getColumnIndexOrThrow("notes"));
@@ -433,7 +490,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============ DOCTOR VISITS METHODS ============
     // =====================================================
 
-    public void addDoctorVisit(DoctorVisit visit) {
+    public long addDoctorVisit(DoctorVisit visit) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("date", dateFormat.format(visit.date));
@@ -441,8 +498,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("prescription", visit.prescription);
         values.put("follow_up_date", visit.followUpDate != null ? dateFormat.format(visit.followUpDate) : null);
         values.put("notes", visit.notes);
-        db.insert(TABLE_DOCTOR, null, values);
+        long id = db.insert(TABLE_DOCTOR, null, values);
         db.close();
+        return id;
     }
 
     public List<DoctorVisit> getAllDoctorVisits() {
@@ -453,10 +511,23 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             DoctorVisit v = new DoctorVisit();
             v.id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
             try {
-                v.date = dateFormat.parse(cursor.getString(cursor.getColumnIndexOrThrow("date")));
-                String follow = cursor.getString(cursor.getColumnIndexOrThrow("follow_up_date"));
-                if (follow != null) v.followUpDate = dateFormat.parse(follow);
-            } catch (Exception e) { v.date = new Date(); }
+                String dateStr = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                if (dateStr != null && !dateStr.isEmpty()) {
+                    v.date = dateFormat.parse(dateStr);
+                } else {
+                    v.date = new Date();
+                }
+
+                String followUpStr = cursor.getString(cursor.getColumnIndexOrThrow("follow_up_date"));
+                if (followUpStr != null && !followUpStr.isEmpty()) {
+                    v.followUpDate = dateFormat.parse(followUpStr);
+                } else {
+                    v.followUpDate = null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                v.date = new Date();
+            }
             v.doctorName = cursor.getString(cursor.getColumnIndexOrThrow("doctor_name"));
             v.prescription = cursor.getString(cursor.getColumnIndexOrThrow("prescription"));
             v.notes = cursor.getString(cursor.getColumnIndexOrThrow("notes"));
@@ -471,15 +542,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // ============ PRESCRIPTIONS METHODS ============
     // =====================================================
 
-    public void addPrescription(Prescription prescription) {
+    public long addPrescription(Prescription prescription) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("date", dateFormat.format(prescription.date));
         values.put("doctor_name", prescription.doctorName);
         values.put("file_path", prescription.filePath);
         values.put("notes", prescription.notes);
-        db.insert(TABLE_PRESCRIPTIONS, null, values);
+        long id = db.insert(TABLE_PRESCRIPTIONS, null, values);
         db.close();
+        return id;
     }
 
     public List<Prescription> getAllPrescriptions() {
@@ -490,8 +562,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             Prescription p = new Prescription();
             p.id = cursor.getInt(cursor.getColumnIndexOrThrow("id"));
             try {
-                p.date = dateFormat.parse(cursor.getString(cursor.getColumnIndexOrThrow("date")));
-            } catch (Exception e) { p.date = new Date(); }
+                String dateStr = cursor.getString(cursor.getColumnIndexOrThrow("date"));
+                if (dateStr != null && !dateStr.isEmpty()) {
+                    p.date = dateFormat.parse(dateStr);
+                } else {
+                    p.date = new Date();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                p.date = new Date();
+            }
             p.doctorName = cursor.getString(cursor.getColumnIndexOrThrow("doctor_name"));
             p.filePath = cursor.getString(cursor.getColumnIndexOrThrow("file_path"));
             p.notes = cursor.getString(cursor.getColumnIndexOrThrow("notes"));
